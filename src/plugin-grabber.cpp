@@ -41,7 +41,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-IRC_BOT_PLUGIN(GrabberIrcBotPlugin);
+IRC_BOT_PLUGIN(RawplugIrcBotPlugin);
 PLUGIN_INFO("Comment Grabber", "0.2");
 
 using namespace skivvy::types;
@@ -76,14 +76,14 @@ entry::entry(const str& stamp, const str& nick, const str& text)
 {
 }
 
-GrabberIrcBotPlugin::GrabberIrcBotPlugin(IrcBot& bot)
+RawplugIrcBotPlugin::RawplugIrcBotPlugin(IrcBot& bot)
 : BasicIrcBotPlugin(bot), max_quotes(100)
 {
 }
 
-GrabberIrcBotPlugin::~GrabberIrcBotPlugin() {}
+RawplugIrcBotPlugin::~RawplugIrcBotPlugin() {}
 
-void GrabberIrcBotPlugin::grab(const message& msg)
+void RawplugIrcBotPlugin::grab(const message& msg)
 {
 	BUG_COMMAND(msg);
 
@@ -160,7 +160,7 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 	mtx_quotes.unlock();
 }
 
-void GrabberIrcBotPlugin::store(const entry& e)
+void RawplugIrcBotPlugin::store(const entry& e)
 {
 	bug_func();
 	bug("stamp: " << e.stamp);
@@ -177,7 +177,7 @@ void GrabberIrcBotPlugin::store(const entry& e)
 	mtx_grabfile.unlock();
 }
 
-void GrabberIrcBotPlugin::rq(const message& msg)
+void RawplugIrcBotPlugin::rq(const message& msg)
 {
 	str nick = lowercase(msg.get_user_params());
 	trim(nick);
@@ -212,7 +212,7 @@ void GrabberIrcBotPlugin::rq(const message& msg)
 
 // INTERFACE: BasicIrcBotPlugin
 
-bool GrabberIrcBotPlugin::initialize()
+bool RawplugIrcBotPlugin::initialize()
 {
 	add
 	({
@@ -233,17 +233,17 @@ bool GrabberIrcBotPlugin::initialize()
 
 // INTERFACE: IrcBotPlugin
 
-str GrabberIrcBotPlugin::get_name() const { return NAME; }
-str GrabberIrcBotPlugin::get_version() const { return VERSION; }
+str RawplugIrcBotPlugin::get_name() const { return NAME; }
+str RawplugIrcBotPlugin::get_version() const { return VERSION; }
 
-void GrabberIrcBotPlugin::exit()
+void RawplugIrcBotPlugin::exit()
 {
 //	bug_func();
 }
 
 // INTERFACE: IrcBotMonitor
 
-void GrabberIrcBotPlugin::event(const message& msg)
+void RawplugIrcBotPlugin::event(const message& msg)
 {
 	mtx_quotes.lock();
 	if(msg.cmd == "PRIVMSG") quotes.push_front(msg);

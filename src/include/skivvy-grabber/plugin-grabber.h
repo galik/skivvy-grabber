@@ -52,7 +52,7 @@ struct quote
  * grabfile - location of grabbed text file "grabfile.txt"
  *
  */
-class GrabberIrcBotPlugin
+class RawplugIrcBotPlugin
 : public BasicIrcBotPlugin
  , public IrcBotMonitor
 {
@@ -74,8 +74,8 @@ private:
 	void store(const entry& e);
 
 public:
-	GrabberIrcBotPlugin(IrcBot& bot);
-	virtual ~GrabberIrcBotPlugin();
+	RawplugIrcBotPlugin(IrcBot& bot);
+	virtual ~RawplugIrcBotPlugin();
 
 	// INTERFACE: BasicIrcBotPlugin
 
