@@ -1,5 +1,5 @@
 /*
- * ircbot-grabber.cpp
+ * plugin-grabber.cpp
  *
  *  Created on: 29 Jul 2011
  *      Author: oaskivvy@gmail.com
@@ -41,7 +41,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-IRC_BOT_PLUGIN(RawplugIrcBotPlugin);
+IRC_BOT_PLUGIN(GrabberIrcBotPlugin);
 PLUGIN_INFO("Comment Grabber", "0.2");
 
 using namespace skivvy::types;
@@ -76,14 +76,14 @@ entry::entry(const str& stamp, const str& nick, const str& text)
 {
 }
 
-RawplugIrcBotPlugin::RawplugIrcBotPlugin(IrcBot& bot)
+GrabberIrcBotPlugin::GrabberIrcBotPlugin(IrcBot& bot)
 : BasicIrcBotPlugin(bot), max_quotes(100)
 {
 }
 
-RawplugIrcBotPlugin::~RawplugIrcBotPlugin() {}
+GrabberIrcBotPlugin::~GrabberIrcBotPlugin() {}
 
-void RawplugIrcBotPlugin::grab(const message& msg)
+void GrabberIrcBotPlugin::grab(const message& msg)
 {
 	BUG_COMMAND(msg);
 
@@ -160,7 +160,7 @@ void RawplugIrcBotPlugin::grab(const message& msg)
 	mtx_quotes.unlock();
 }
 
-void RawplugIrcBotPlugin::store(const entry& e)
+void GrabberIrcBotPlugin::store(const entry& e)
 {
 	bug_func();
 	bug("stamp: " << e.stamp);
@@ -177,7 +177,7 @@ void RawplugIrcBotPlugin::store(const entry& e)
 	mtx_grabfile.unlock();
 }
 
-void RawplugIrcBotPlugin::rq(const message& msg)
+void GrabberIrcBotPlugin::rq(const message& msg)
 {
 	str nick = lowercase(msg.get_user_params());
 	trim(nick);
@@ -212,7 +212,7 @@ void RawplugIrcBotPlugin::rq(const message& msg)
 
 // INTERFACE: BasicIrcBotPlugin
 
-bool RawplugIrcBotPlugin::initialize()
+bool GrabberIrcBotPlugin::initialize()
 {
 	add
 	({
@@ -233,17 +233,17 @@ bool RawplugIrcBotPlugin::initialize()
 
 // INTERFACE: IrcBotPlugin
 
-str RawplugIrcBotPlugin::get_name() const { return NAME; }
-str RawplugIrcBotPlugin::get_version() const { return VERSION; }
+str GrabberIrcBotPlugin::get_name() const { return NAME; }
+str GrabberIrcBotPlugin::get_version() const { return VERSION; }
 
-void RawplugIrcBotPlugin::exit()
+void GrabberIrcBotPlugin::exit()
 {
 //	bug_func();
 }
 
 // INTERFACE: IrcBotMonitor
 
-void RawplugIrcBotPlugin::event(const message& msg)
+void GrabberIrcBotPlugin::event(const message& msg)
 {
 	mtx_quotes.lock();
 	if(msg.cmd == "PRIVMSG") quotes.push_front(msg);
