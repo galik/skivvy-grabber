@@ -61,7 +61,7 @@ struct entry
 };
 
 entry::entry(const quote& q)
-: nick(q.msg.get_sender())
+: nick(q.msg.get_nick())
 , text(q.msg.text)
 {
 	std::ostringstream oss;
@@ -96,16 +96,16 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 	}
 
 	// TODO: Remove  && nick != "SooKee" (debugging)
-	if(msg.get_sender() == nick && nick != "SooKee")
+	if(msg.get_nick() == nick && nick != "SooKee")
 	{
-		bot.fc_reply(msg, "Please don't grab yourself in public " + msg.get_sender() + "!");
+		bot.fc_reply(msg, "Please don't grab yourself in public " + msg.get_nick() + "!");
 		return;
 	}
 
 	if(nick == bot.nick)
 	{
-		bug("grabber: " << msg.get_sender());
-		bot.fc_reply(msg, "Sorry " + msg.get_sender() + ", look but don't touch!");
+		bug("grabber: " << msg.get_nick());
+		bot.fc_reply(msg, "Sorry " + msg.get_nick() + ", look but don't touch!");
 		return;
 	}
 
@@ -139,13 +139,13 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 	for(q = quotes.begin(); n && q != quotes.end(); ++q)
 		if(sub.empty())
 		{
-			if(lowercase(q->msg.get_sender()) == lowercase(nick))
+			if(lowercase(q->msg.get_nick()) == lowercase(nick))
 				if(!(--n))
 					break;
 		}
 		else
 		{
-			if(lowercase(q->msg.get_sender()) == lowercase(nick))
+			if(lowercase(q->msg.get_nick()) == lowercase(nick))
 				if(q->msg.text.find(sub) != str::npos && skipped)
 					break;
 			skipped = true;
