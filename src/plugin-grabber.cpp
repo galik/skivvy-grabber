@@ -95,8 +95,7 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 		return;
 	}
 
-	// TODO: Remove  && nick != "SooKee" (debugging)
-	if(msg.get_nick() == nick && nick != "SooKee")
+	if(msg.get_nick() == nick)
 	{
 		bot.fc_reply(msg, "Please don't grab yourself in public " + msg.get_nick() + "!");
 		return;
