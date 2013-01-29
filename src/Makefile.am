@@ -55,4 +55,4 @@ skivvy_plugin_grabber_la_LDFLAGS = -module
 
 plugin_manuals_DATA = $(top_srcdir)/docs/grabber-manual.text
 
-extra_DIST = $(top_srcdir)/docs/manual.text
+extra_DIST = $(top_srcdir)/docs/grabber-manual.text
