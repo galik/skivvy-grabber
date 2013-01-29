@@ -21,9 +21,9 @@
 # 
 # '-----------------------------------------------------------------*/
 
-#skivvydir = $(prefix)/include/skivvy
-plugindir = $(datadir)/skivvy/plugins
-docsdir = $(datadir)/skivvy
+plugin_includedir = $(prefix)/include/skivvy-grabber
+plugin_librarydir = $(datadir)/skivvy/plugins
+plugin_manualsdir = $(datadir)/skivvy
 
 DEF_FLAGS = \
 	-D _GLIBCXX_USE_NANOSLEEP \
@@ -43,13 +43,16 @@ BOTLIBS = -lskivvy -ldl
 # -Wl,-E is required for programs that load plugin's
 BOTFLAGS = -Wl,-E
 
-plugin_LTLIBRARIES =  \
+plugin_include_HEADERS = \
+	$(srcdir)/include/skivvy-grabber/plugin-grabber.h
+
+plugin_library_LTLIBRARIES =  \
 	skivvy-plugin-grabber.la
 
 # IrcBot plugins
 skivvy_plugin_grabber_la_SOURCES = plugin-grabber.cpp
 skivvy_plugin_grabber_la_LDFLAGS = -module
 
-docs_DATA = $(top_srcdir)/docs/manual.text
+plugin_manuals_DATA = $(top_srcdir)/docs/grabber-manual.text
 
 extra_DIST = $(top_srcdir)/docs/manual.text
