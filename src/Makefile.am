@@ -21,9 +21,9 @@
 # 
 # '-----------------------------------------------------------------*/
 
-plugin_includedir = $(prefix)/include/skivvy-grabber
-plugin_librarydir = $(datadir)/skivvy/plugins
-plugin_manualsdir = $(datadir)/skivvy
+plugin_includedir = $(includedir)/skivvy
+plugin_librarydir = $(libdir)/skivvy
+plugin_manualsdir = $(mandir)/skivvy
 
 DEF_FLAGS = \
 	-D _GLIBCXX_USE_NANOSLEEP \
@@ -44,15 +44,21 @@ BOTLIBS = -lskivvy -ldl
 BOTFLAGS = -Wl,-E
 
 plugin_include_HEADERS = \
-	$(srcdir)/include/skivvy-grabber/plugin-grabber.h
+	$(srcdir)/include/skivvy/plugin-grabber.h
 
 plugin_library_LTLIBRARIES =  \
 	skivvy-plugin-grabber.la
 
 # IrcBot plugins
 skivvy_plugin_grabber_la_SOURCES = plugin-grabber.cpp
-skivvy_plugin_grabber_la_LDFLAGS = -module
+skivvy_plugin_grabber_la_LDFLAGS = -module -avoid-version
 
 plugin_manuals_DATA = $(top_srcdir)/docs/grabber-manual.text
 
 extra_DIST = $(top_srcdir)/docs/grabber-manual.text
+
+install-data-hook: $(plugin_library_LTLIBRARIES)
+	for m in $(plugin_library_LTLIBRARIES); do \
+		base=`echo $$m | sed 's/\..*//'`; \
+		rm -f $(plugin_librarydir)/$$base.la; \
+	done

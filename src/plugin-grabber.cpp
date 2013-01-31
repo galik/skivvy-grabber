@@ -28,7 +28,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <skivvy-grabber/plugin-grabber.h>
+#include <skivvy/plugin-grabber.h>
 
 #include <ctime>
 #include <cstdlib>
