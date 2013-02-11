@@ -61,8 +61,8 @@ struct entry
 };
 
 entry::entry(const quote& q)
-: nick(q.msg.get_nick_cp())
-, text(q.msg.text_cp)
+: nick(q.msg.get_nickname())
+, text(q.msg.get_trailing())
 {
 	std::ostringstream oss;
 	oss << q.stamp;
@@ -88,23 +88,23 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 	BUG_COMMAND(msg);
 
 	str nick;
-	std::istringstream iss(msg.get_user_params_cp());
+	std::istringstream iss(msg.get_user_params());
 	if(!(iss >> nick))
 	{
 		bot.fc_reply(msg, "I failed to grasp it... :(");
 		return;
 	}
 
-	if(msg.get_nick_cp() == nick)
+	if(msg.get_nickname() == nick)
 	{
-		bot.fc_reply(msg, "Please don't grab yourself in public " + msg.get_nick_cp() + "!");
+		bot.fc_reply(msg, "Please don't grab yourself in public " + msg.get_nickname() + "!");
 		return;
 	}
 
 	if(nick == bot.nick)
 	{
-		bug("grabber: " << msg.get_nick_cp());
-		bot.fc_reply(msg, "Sorry " + msg.get_nick_cp() + ", look but don't touch!");
+		bug("grabber: " << msg.get_nickname());
+		bot.fc_reply(msg, "Sorry " + msg.get_nickname() + ", look but don't touch!");
 		return;
 	}
 
@@ -138,14 +138,14 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 	for(q = quotes.begin(); n && q != quotes.end(); ++q)
 		if(sub.empty())
 		{
-			if(lowercase(q->msg.get_nick_cp()) == lowercase(nick))
+			if(lowercase(q->msg.get_nickname()) == lowercase(nick))
 				if(!(--n))
 					break;
 		}
 		else
 		{
-			if(lowercase(q->msg.get_nick_cp()) == lowercase(nick))
-				if(q->msg.text_cp.find(sub) != str::npos && skipped)
+			if(lowercase(q->msg.get_nickname()) == lowercase(nick))
+				if(q->msg.get_trailing().find(sub) != str::npos && skipped)
 					break;
 			skipped = true;
 		}
@@ -154,7 +154,7 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 	if(q != quotes.end())
 	{
 		store(entry(*q));
-		bot.fc_reply(msg, nick + " has been grabbed: " + q->msg.text_cp.substr(0, 16) + "...");
+		bot.fc_reply(msg, nick + " has been grabbed: " + q->msg.get_trailing().substr(0, 16) + "...");
 	}
 	mtx_quotes.unlock();
 }
@@ -178,7 +178,7 @@ void GrabberIrcBotPlugin::store(const entry& e)
 
 void GrabberIrcBotPlugin::rq(const message& msg)
 {
-	str nick = lowercase(msg.get_user_params_cp());
+	str nick = lowercase(msg.get_user_params());
 	trim(nick);
 
 	const str datafile = bot.getf(DATA_FILE, DATA_FILE_DEFAULT);
@@ -246,8 +246,10 @@ void GrabberIrcBotPlugin::exit()
 void GrabberIrcBotPlugin::event(const message& msg)
 {
 	mtx_quotes.lock();
-	if(msg.cmd_cp == "PRIVMSG") quotes.push_front(msg);
-	while(quotes.size() > max_quotes) quotes.pop_back();
+	if(msg.command == "PRIVMSG")
+		quotes.push_front(msg);
+	while(quotes.size() > max_quotes)
+		quotes.pop_back();
 	mtx_quotes.unlock();
 }
 
