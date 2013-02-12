@@ -54,23 +54,27 @@ const str DATA_FILE_DEFAULT = "grabber-data.txt";
 struct entry
 {
 	str stamp;
+	str chan;
 	str nick;
 	str text;
 	entry(const quote& q);
-	entry(const str& stamp, const str& nick, const str& text);
+	entry(const str& stamp, const str& chan, const str& nick, const str& text);
 };
 
 entry::entry(const quote& q)
-: nick(q.msg.get_nickname())
+: stamp(std::to_string(q.stamp))
+, chan(q.msg.get_chan())
+, nick(q.msg.get_nickname())
 , text(q.msg.get_trailing())
 {
-	std::ostringstream oss;
-	oss << q.stamp;
-	stamp = oss.str();
+//	std::ostringstream oss;
+//	oss << q.stamp;
+//	stamp = oss.str();
 }
 
-entry::entry(const str& stamp, const str& nick, const str& text)
+entry::entry(const str& stamp, const str& chan, const str& nick, const str& text)
 : stamp(stamp)
+, chan(chan)
 , nick(nick)
 , text(text)
 {
@@ -163,6 +167,7 @@ void GrabberIrcBotPlugin::store(const entry& e)
 {
 	bug_func();
 	bug("stamp: " << e.stamp);
+	bug(" chan: " << e.chan);
 	bug(" nick: " << e.nick);
 	bug(" text: " << e.text);
 
@@ -171,9 +176,8 @@ void GrabberIrcBotPlugin::store(const entry& e)
 	std::ofstream ofs(datafile, std::ios::app);
 	if(!ofs)
 		log("ERROR: Cannot open grabfile for output: " << datafile);
-	mtx_grabfile.lock();
-	ofs << e.stamp << ' ' << e.nick << ' ' << e.text << '\n';
-	mtx_grabfile.unlock();
+	lock_guard lock(mtx_grabfile);
+	ofs << e.stamp << ' ' << e.chan << ' ' << e.nick << ' ' << e.text << '\n';
 }
 
 void GrabberIrcBotPlugin::rq(const message& msg)
@@ -185,17 +189,20 @@ void GrabberIrcBotPlugin::rq(const message& msg)
 
 	std::ifstream ifs(datafile);
 	if(!ifs) log("ERROR: Cannot open grabfile for input: " << datafile);
-	str t, n, q;
+	str t, c, n, q;
 	std::vector<entry> full_match_list;
 	std::vector<entry> part_match_list;
 
 	mtx_grabfile.lock();
-	while(std::getline((ifs >> t >> n), q))
+	sgl(ifs, q); // skip version string
+	while(sgl(ifs >> t >> c >> n >> std::ws, q))
 	{
+		if(c != "*" && c != msg.get_chan())
+			continue;
 		if(nick.empty() || lowercase(n) == nick)
-			full_match_list.push_back(entry(t, n, q));
+			full_match_list.push_back(entry(t, c, n, q));
 		if(nick.empty() || lowercase(n).find(nick) != str::npos)
-			part_match_list.push_back(entry(t, n, q));
+			part_match_list.push_back(entry(t, c, n, q));
 	}
 	mtx_grabfile.unlock();
 
@@ -213,6 +220,28 @@ void GrabberIrcBotPlugin::rq(const message& msg)
 
 bool GrabberIrcBotPlugin::initialize()
 {
+	// TODO: UPGRADE FILE HERE
+	log("GRABBER: Checking file version:");
+	std::ifstream ifs(bot.getf(DATA_FILE, DATA_FILE_DEFAULT));
+
+	str line;
+	sgl(ifs, line);
+	if(line.find("GRABBER_FILE_VERSION:"))
+	{
+		log("GRABBER: File is unversionned, upgrading to v0.1");
+		// unversionned
+		str_vec lines;
+		str t, c, n, q;
+		ifs.seekg(0);
+		while(sgl(ifs >> t >> n >> std::ws, q))
+			lines.push_back(t + " * " + n + " " + q);
+		ifs.close();
+		std::ofstream ofs(bot.getf(DATA_FILE, DATA_FILE_DEFAULT));
+		ofs << "GRABBER_FILE_VERSION: 0.1" << '\n';
+		for(const str& line: lines)
+			ofs << line << '\n';
+	}
+
 	add
 	({
 		"!grab"
@@ -245,12 +274,13 @@ void GrabberIrcBotPlugin::exit()
 
 void GrabberIrcBotPlugin::event(const message& msg)
 {
-	mtx_quotes.lock();
 	if(msg.command == "PRIVMSG")
+	{
+		lock_guard lock(mtx_quotes);
 		quotes.push_front(msg);
-	while(quotes.size() > max_quotes)
-		quotes.pop_back();
-	mtx_quotes.unlock();
+		while(quotes.size() > max_quotes)
+			quotes.pop_back();
+	}
 }
 
 }} // sookee::ircbot
