@@ -112,24 +112,28 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 		return;
 	}
 
-	size_t n = 1;
+	siz n = 1;
 	str sub; // substring match text for grab
 
 	if(!(iss >> n))
 	{
+		n = 1;
 		iss.clear();
 		std::getline(iss, sub);
 		trim(sub);
 	}
 
-	bug("  n: " << n);
-	bug("sub: " << sub);
+	bug("   n: " << n);
+	bug(" sub: " << sub);
+	bug("nick: " << nick);
 
-	if(n > quotes.size())
+	quote_que& chan_quotes = quotes[msg.get_chan()];
+
+	if(n > chan_quotes.size())
 	{
 		std::ostringstream oss;
 		oss << "My memory fails me. That was over ";
-		oss << quotes.size() << " comments ago. ";
+		oss << chan_quotes.size() << " comments ago. ";
 		oss << "Who can remember all that stuff?";
 		bot.fc_reply(msg, oss.str());
 		return;
@@ -137,9 +141,9 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 
 	quote_citer q;
 
-	mtx_quotes.lock();
+	lock_guard lock(mtx_quotes);
 	bool skipped = false;
-	for(q = quotes.begin(); n && q != quotes.end(); ++q)
+	for(q = chan_quotes.begin(); n && q != chan_quotes.end(); ++q)
 		if(sub.empty())
 		{
 			if(lowercase(q->msg.get_nickname()) == lowercase(nick))
@@ -155,12 +159,11 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 		}
 
 
-	if(q != quotes.end())
+	if(q != chan_quotes.end())
 	{
 		store(entry(*q));
 		bot.fc_reply(msg, nick + " has been grabbed: " + q->msg.get_trailing().substr(0, 16) + "...");
 	}
-	mtx_quotes.unlock();
 }
 
 void GrabberIrcBotPlugin::store(const entry& e)
@@ -276,10 +279,12 @@ void GrabberIrcBotPlugin::event(const message& msg)
 {
 	if(msg.command == "PRIVMSG")
 	{
+		quote_que& chan_quotes = quotes[msg.get_chan()];
+
 		lock_guard lock(mtx_quotes);
-		quotes.push_front(msg);
-		while(quotes.size() > max_quotes)
-			quotes.pop_back();
+		chan_quotes.push_front(msg);
+		while(chan_quotes.size() > max_quotes)
+			chan_quotes.pop_back();
 	}
 }
 

@@ -61,11 +61,14 @@ public:
 	typedef quote_que::iterator quote_iter;
 	typedef quote_que::const_iterator quote_citer;
 
+	typedef std::map<str, quote_que> quote_map;
+	typedef quote_map::value_type quote_map_val;
+
 private:
 
 	std::mutex mtx_grabfile; // database
 	std::mutex mtx_quotes; // message queue
-	quote_que quotes;
+	quote_map quotes;
 	size_t max_quotes; // message queue
 
 	void grab(const message& msg);
