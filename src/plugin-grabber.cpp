@@ -193,8 +193,12 @@ void GrabberIrcBotPlugin::rq(const message& msg)
 	const str datafile = bot.getf(DATA_FILE, DATA_FILE_DEFAULT);
 
 	std::ifstream ifs(datafile);
-	if(!ifs) log("ERROR: Cannot open grabfile for input: " << datafile);
+
+	if(!ifs)
+		log("ERROR: Cannot open grabfile for input: " << datafile);
+
 	str t, c, n, q;
+
 	std::vector<entry> full_match_list;
 	std::vector<entry> part_match_list;
 
@@ -279,7 +283,7 @@ void GrabberIrcBotPlugin::exit()
 
 void GrabberIrcBotPlugin::event(const message& msg)
 {
-	if(msg.command == "PRIVMSG")
+	if(msg.command == "PRIVMSG" && msg.get_trailing().find("\001ACTION "))
 	{
 		quote_que& chan_quotes = quotes[msg.get_chan()];
 
