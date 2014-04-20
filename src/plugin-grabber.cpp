@@ -37,16 +37,18 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <iostream>
 
 #include <skivvy/logrep.h>
-#include <skivvy/str.h>
+#include <skivvy/utils.h>
+#include <sookee/types.h>
+#include <sookee/str.h>
 
 namespace skivvy { namespace ircbot {
 
 IRC_BOT_PLUGIN(GrabberIrcBotPlugin);
 PLUGIN_INFO("grabber", "Comment Grabber", "0.2");
 
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace skivvy::utils;
-using namespace skivvy::string;
+using namespace sookee::string;
 
 const str DATA_FILE = "grabber.data_file";
 const str DATA_FILE_DEFAULT = "grabber-data.txt";
@@ -146,13 +148,13 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 	for(q = chan_quotes.begin(); n && q != chan_quotes.end(); ++q)
 		if(sub.empty())
 		{
-			if(lowercase(q->msg.get_nickname()) == lowercase(nick))
+			if(lower(q->msg.get_nickname()) == lower(nick))
 				if(!(--n))
 					break;
 		}
 		else
 		{
-			if(lowercase(q->msg.get_nickname()) == lowercase(nick))
+			if(lower(q->msg.get_nickname()) == lower(nick))
 				if(q->msg.get_trailing().find(sub) != str::npos && skipped)
 					break;
 			skipped = true;
@@ -185,7 +187,7 @@ void GrabberIrcBotPlugin::store(const entry& e)
 
 void GrabberIrcBotPlugin::rq(const message& msg)
 {
-	str nick = lowercase(msg.get_user_params());
+	str nick = lower(msg.get_user_params());
 	trim(nick);
 
 	const str datafile = bot.getf(DATA_FILE, DATA_FILE_DEFAULT);
@@ -202,9 +204,9 @@ void GrabberIrcBotPlugin::rq(const message& msg)
 	{
 		if(c != "*" && c != msg.get_chan())
 			continue;
-		if(nick.empty() || lowercase(n) == nick)
+		if(nick.empty() || lower(n) == nick)
 			full_match_list.push_back(entry(t, c, n, q));
-		if(nick.empty() || lowercase(n).find(nick) != str::npos)
+		if(nick.empty() || lower(n).find(nick) != str::npos)
 			part_match_list.push_back(entry(t, c, n, q));
 	}
 	mtx_grabfile.unlock();
