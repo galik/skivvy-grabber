@@ -37,6 +37,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <iostream>
 
 #include <sookee/str.h>
+#include <sookee/types.h>
 
 #include <skivvy/utils.h>
 #include <skivvy/logrep.h>
@@ -46,7 +47,7 @@ namespace skivvy { namespace ircbot {
 IRC_BOT_PLUGIN(GrabberIrcBotPlugin);
 PLUGIN_INFO("grabber", "Comment Grabber", "0.2");
 
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace skivvy::utils;
 using namespace sookee::string;
 
@@ -93,6 +94,8 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 {
 	BUG_COMMAND(msg);
 
+	bug("A");
+
 	str nick;
 	std::istringstream iss(msg.get_user_params());
 	if(!(iss >> nick))
@@ -101,11 +104,15 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 		return;
 	}
 
+	bug("B");
+
 	if(msg.get_nickname() == nick)
 	{
 		bot.fc_reply(msg, "Please don't grab yourself in public " + msg.get_nickname() + "!");
 		return;
 	}
+
+	bug("C");
 
 	if(nick == bot.nick)
 	{
@@ -114,8 +121,12 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 		return;
 	}
 
+	bug("D");
+
 	siz n = 1;
 	str sub; // substring match text for grab
+
+	bug("E");
 
 	if(!(iss >> n))
 	{
@@ -131,6 +142,8 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 
 	quote_que& chan_quotes = quotes[msg.get_chan()];
 
+	bug("F");
+
 	if(n > chan_quotes.size())
 	{
 		std::ostringstream oss;
@@ -140,6 +153,8 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 		bot.fc_reply(msg, oss.str());
 		return;
 	}
+
+	bug("G");
 
 	quote_citer q;
 
@@ -161,11 +176,16 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 		}
 
 
+	bug("H");
+
 	if(q != chan_quotes.end())
 	{
 		store(entry(*q));
+		bug("Ha");
 		bot.fc_reply(msg, nick + " has been grabbed: " + q->msg.get_trailing().substr(0, 16) + "...");
+		bug("Hb");
 	}
+	bug("I");
 }
 
 void GrabberIrcBotPlugin::store(const entry& e)
