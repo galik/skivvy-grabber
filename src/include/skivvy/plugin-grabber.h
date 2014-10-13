@@ -1,6 +1,5 @@
-#pragma once
-#ifndef _SOOKEE_IRCBOT_GRABBER_H_
-#define _SOOKEE_IRCBOT_GRABBER_H_
+#ifndef SOOKEE_IRCBOT_GRABBER_H_
+#define SOOKEE_IRCBOT_GRABBER_H_
 /*
  * ircbot-grabber.h
  *
@@ -96,6 +95,6 @@ public:
 	virtual void event(const message& msg);
 };
 
-}} // sookee::ircbot
+}} // skivvy::ircbot
 
-#endif // _SOOKEE_IRCBOT_GRABBER_H_
+#endif // SOOKEE_IRCBOT_GRABBER_H_
