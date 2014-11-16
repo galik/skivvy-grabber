@@ -53,7 +53,7 @@ using namespace skivvy::utils;
 using namespace sookee::bug;
 using namespace sookee::log;
 using namespace sookee::types;
-using namespace sookee::string;
+using namespace sookee::utils;
 
 const str DATA_FILE = "grabber.data_file";
 const str DATA_FILE_DEFAULT = "grabber-data.txt";
