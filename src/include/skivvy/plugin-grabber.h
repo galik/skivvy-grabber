@@ -53,7 +53,7 @@ struct quote
  */
 class GrabberIrcBotPlugin
 : public BasicIrcBotPlugin
- , public IrcBotMonitor
+, public IrcBotMonitor
 {
 public:
 	typedef std::deque<quote> quote_que;
