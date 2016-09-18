@@ -172,7 +172,7 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 
 void GrabberIrcBotPlugin::store(const entry& e)
 {
-	bug_func();
+	bug_fun();
 	bug("stamp: " << e.stamp);
 	bug(" chan: " << e.chan);
 	bug(" nick: " << e.nick);
@@ -278,7 +278,7 @@ str GrabberIrcBotPlugin::get_version() const { return VERSION; }
 
 void GrabberIrcBotPlugin::exit()
 {
-//	bug_func();
+//	bug_fun();
 }
 
 // INTERFACE: IrcBotMonitor
