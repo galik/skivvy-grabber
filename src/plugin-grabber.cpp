@@ -36,10 +36,10 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sstream>
 #include <iostream>
 
-#include <sookee/bug.h>
-#include <sookee/log.h>
-#include <sookee/str.h>
-#include <sookee/types.h>
+#include <hol/bug.h>
+#include <hol/simple_logger.h>
+#include <hol/string_utils.h>
+#include <hol/small_types.h>
 
 #include <skivvy/utils.h>
 #include <skivvy/logrep.h>
@@ -50,10 +50,8 @@ IRC_BOT_PLUGIN(GrabberIrcBotPlugin);
 PLUGIN_INFO("grabber", "Comment Grabber", "0.6.0");
 
 using namespace skivvy::utils;
-using namespace sookee::bug;
-using namespace sookee::log;
-using namespace sookee::types;
-using namespace sookee::utils;
+using namespace hol::simple_logger;
+using namespace hol::small_types::basic;
 
 const str DATA_FILE = "grabber.data_file";
 const str DATA_FILE_DEFAULT = "grabber-data.txt";
@@ -89,8 +87,6 @@ GrabberIrcBotPlugin::GrabberIrcBotPlugin(IrcBot& bot)
 {
 }
 
-GrabberIrcBotPlugin::~GrabberIrcBotPlugin() {}
-
 void GrabberIrcBotPlugin::grab(const message& msg)
 {
 	BUG_COMMAND(msg);
@@ -124,7 +120,7 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 		n = 1;
 		iss.clear();
 		std::getline(iss, sub);
-		trim(sub);
+		hol::trim_mute(sub);
 	}
 
 	bug("   n: " << n);
@@ -150,13 +146,13 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 	for(q = chan_quotes.begin(); n && q != chan_quotes.end(); ++q)
 		if(sub.empty())
 		{
-			if(lower_copy(q->msg.get_nickname()) == lower_copy(nick))
+			if(hol::lower_copy(q->msg.get_nickname()) == hol::lower_copy(nick))
 				if(!(--n))
 					break;
 		}
 		else
 		{
-			if(lower_copy(q->msg.get_nickname()) == lower_copy(nick))
+			if(hol::lower_copy(q->msg.get_nickname()) == hol::lower_copy(nick))
 				if(q->msg.get_trailing().find(sub) != str::npos && skipped)
 					break;
 			skipped = true;
@@ -182,40 +178,41 @@ void GrabberIrcBotPlugin::store(const entry& e)
 
 	std::ofstream ofs(datafile, std::ios::app);
 	if(!ofs)
-		log("ERROR: Cannot open grabfile for output: " << datafile);
+		LOG::E << "Cannot open grabfile for output: " << datafile;
 	lock_guard lock(mtx_grabfile);
 	ofs << e.stamp << ' ' << e.chan << ' ' << e.nick << ' ' << e.text << '\n';
 }
 
 void GrabberIrcBotPlugin::rq(const message& msg)
 {
-	str nick = lower_copy(msg.get_user_params());
-	trim(nick);
+	str nick = hol::lower_copy(msg.get_user_params());
+	hol::trim_mute(nick);
 
 	const str datafile = bot.getf(DATA_FILE, DATA_FILE_DEFAULT);
 
 	std::ifstream ifs(datafile);
 
 	if(!ifs)
-		log("ERROR: Cannot open grabfile for input: " << datafile);
+		LOG::E << "Cannot open grabfile for input: " << datafile;
 
 	str t, c, n, q;
 
 	std::vector<entry> full_match_list;
 	std::vector<entry> part_match_list;
 
-	mtx_grabfile.lock();
-	sgl(ifs, q); // skip version string
-	while(sgl(ifs >> t >> c >> n >> std::ws, q))
-	{
-		if(c != "*" && c != msg.get_chan())
-			continue;
-		if(nick.empty() || lower_copy(n) == nick)
-			full_match_list.push_back(entry(t, c, n, q));
-		if(nick.empty() || lower_copy(n).find(nick) != str::npos)
-			part_match_list.push_back(entry(t, c, n, q));
+	{	std::lock_guard<std::mutex> lock(mtx_grabfile);
+
+		sgl(ifs, q); // skip version string
+		while(sgl(ifs >> t >> c >> n >> std::ws, q))
+		{
+			if(c != "*" && c != msg.get_chan())
+				continue;
+			if(nick.empty() || hol::lower_copy(n) == nick)
+				full_match_list.push_back(entry(t, c, n, q));
+			if(nick.empty() || hol::lower_copy(n).find(nick) != str::npos)
+				part_match_list.push_back(entry(t, c, n, q));
+		}
 	}
-	mtx_grabfile.unlock();
 
 	if(full_match_list.empty())
 		full_match_list.assign(part_match_list.begin(), part_match_list.end());
@@ -232,14 +229,14 @@ void GrabberIrcBotPlugin::rq(const message& msg)
 bool GrabberIrcBotPlugin::initialize()
 {
 	// TODO: UPGRADE FILE HERE
-	log("GRABBER: Checking file version:");
+	LOG::I << "GRABBER: Checking file version:";
 	std::ifstream ifs(bot.getf(DATA_FILE, DATA_FILE_DEFAULT));
 
 	str line;
 	sgl(ifs, line);
 	if(line.find("GRABBER_FILE_VERSION:"))
 	{
-		log("GRABBER: File is unversionned, upgrading to v0.1");
+		LOG::I << "GRABBER: File is unversionned, upgrading to v0.1";
 		// unversionned
 		str_vec lines;
 		str t, c, n, q;

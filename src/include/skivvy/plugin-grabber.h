@@ -35,7 +35,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <deque>
 #include <mutex>
 
+#include <hol/small_types.h>
+
 namespace skivvy { namespace ircbot {
+
+using namespace hol::small_types::basic;
 
 struct entry;
 struct quote
@@ -56,28 +60,14 @@ class GrabberIrcBotPlugin
 , public IrcBotMonitor
 {
 public:
-	typedef std::deque<quote> quote_que;
-	typedef quote_que::iterator quote_iter;
-	typedef quote_que::const_iterator quote_citer;
+	using quote_que = std::deque<quote>;
+	using quote_iter = quote_que::iterator;
+	using quote_citer = quote_que::const_iterator;
 
-	typedef std::map<str, quote_que> quote_map;
-	typedef quote_map::value_type quote_map_val;
+	using quote_map = std::map<str, quote_que>;
+	using quote_map_val = quote_map::value_type;
 
-private:
-
-	std::mutex mtx_grabfile; // database
-	std::mutex mtx_quotes; // message queue
-	quote_map quotes;
-	size_t max_quotes; // message queue
-
-	void grab(const message& msg);
-	void rq(const message& msg);
-
-	void store(const entry& e);
-
-public:
 	GrabberIrcBotPlugin(IrcBot& bot);
-	virtual ~GrabberIrcBotPlugin();
 
 	// INTERFACE: BasicIrcBotPlugin
 
@@ -85,14 +75,27 @@ public:
 
 	// INTERFACE: IrcBotPlugin
 
-	virtual std::string get_id() const;
-	virtual std::string get_name() const;
-	virtual std::string get_version() const;
-	virtual void exit();
+	str get_id() const override;
+	str get_name() const override;
+	str get_version() const override;
+	void exit() override;
 
 	// INTERFACE: IrcBotMonitor
 
-	virtual void event(const message& msg);
+	void event(const message& msg) override;
+
+private:
+
+	std::mutex mtx_grabfile; // database
+	std::mutex mtx_quotes; // message queue
+	quote_map quotes;
+	siz max_quotes; // message queue
+
+	void grab(const message& msg);
+	void rq(const message& msg);
+
+	void store(const entry& e);
+
 };
 
 }} // skivvy::ircbot
