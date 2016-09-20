@@ -41,8 +41,8 @@ AX_CXX_COMPILE_STDCXX_14([noext],[mandatory])
 
 PKG_CHECK_MODULES([SKIVVY], [libskivvy])
 
-AX_BOOST_BASE([1.6],, [AC_MSG_ERROR([skivvy needs Boost v1.6, but it was not found in your system])])
-AX_BOOST_ASIO
+#AX_BOOST_BASE([1.6],, [AC_MSG_ERROR([skivvy needs Boost v1.6, but it was not found in your system])])
+#AX_BOOST_ASIO
 
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
