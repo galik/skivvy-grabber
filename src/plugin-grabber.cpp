@@ -47,7 +47,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 IRC_BOT_PLUGIN(GrabberIrcBotPlugin);
-PLUGIN_INFO("grabber", "Comment Grabber", "0.2");
+PLUGIN_INFO("grabber", "Comment Grabber", "0.6.0");
 
 using namespace skivvy::utils;
 using namespace sookee::bug;
