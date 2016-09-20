@@ -1,6 +1,5 @@
-#pragma once
-#ifndef _SOOKEE_IRCBOT_GRABBER_H_
-#define _SOOKEE_IRCBOT_GRABBER_H_
+#ifndef SOOKEE_IRCBOT_GRABBER_H_
+#define SOOKEE_IRCBOT_GRABBER_H_
 /*
  * ircbot-grabber.h
  *
@@ -54,7 +53,7 @@ struct quote
  */
 class GrabberIrcBotPlugin
 : public BasicIrcBotPlugin
- , public IrcBotMonitor
+, public IrcBotMonitor
 {
 public:
 	typedef std::deque<quote> quote_que;
@@ -96,6 +95,6 @@ public:
 	virtual void event(const message& msg);
 };
 
-}} // sookee::ircbot
+}} // skivvy::ircbot
 
-#endif // _SOOKEE_IRCBOT_GRABBER_H_
+#endif // SOOKEE_IRCBOT_GRABBER_H_

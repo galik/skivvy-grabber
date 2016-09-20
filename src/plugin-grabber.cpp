@@ -36,19 +36,24 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sstream>
 #include <iostream>
 
-#include <skivvy/logrep.h>
-#include <skivvy/utils.h>
-#include <sookee/types.h>
+#include <sookee/bug.h>
+#include <sookee/log.h>
 #include <sookee/str.h>
+#include <sookee/types.h>
+
+#include <skivvy/utils.h>
+#include <skivvy/logrep.h>
 
 namespace skivvy { namespace ircbot {
 
 IRC_BOT_PLUGIN(GrabberIrcBotPlugin);
 PLUGIN_INFO("grabber", "Comment Grabber", "0.2");
 
-using namespace sookee::types;
 using namespace skivvy::utils;
-using namespace sookee::string;
+using namespace sookee::bug;
+using namespace sookee::log;
+using namespace sookee::types;
+using namespace sookee::utils;
 
 const str DATA_FILE = "grabber.data_file";
 const str DATA_FILE_DEFAULT = "grabber-data.txt";
@@ -69,9 +74,6 @@ entry::entry(const quote& q)
 , nick(q.msg.get_nickname())
 , text(q.msg.get_trailing())
 {
-//	std::ostringstream oss;
-//	oss << q.stamp;
-//	stamp = oss.str();
 }
 
 entry::entry(const str& stamp, const str& chan, const str& nick, const str& text)
@@ -148,13 +150,13 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 	for(q = chan_quotes.begin(); n && q != chan_quotes.end(); ++q)
 		if(sub.empty())
 		{
-			if(lower(q->msg.get_nickname()) == lower(nick))
+			if(lower_copy(q->msg.get_nickname()) == lower_copy(nick))
 				if(!(--n))
 					break;
 		}
 		else
 		{
-			if(lower(q->msg.get_nickname()) == lower(nick))
+			if(lower_copy(q->msg.get_nickname()) == lower_copy(nick))
 				if(q->msg.get_trailing().find(sub) != str::npos && skipped)
 					break;
 			skipped = true;
@@ -170,7 +172,7 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 
 void GrabberIrcBotPlugin::store(const entry& e)
 {
-	bug_func();
+	bug_fun();
 	bug("stamp: " << e.stamp);
 	bug(" chan: " << e.chan);
 	bug(" nick: " << e.nick);
@@ -187,14 +189,18 @@ void GrabberIrcBotPlugin::store(const entry& e)
 
 void GrabberIrcBotPlugin::rq(const message& msg)
 {
-	str nick = lower(msg.get_user_params());
+	str nick = lower_copy(msg.get_user_params());
 	trim(nick);
 
 	const str datafile = bot.getf(DATA_FILE, DATA_FILE_DEFAULT);
 
 	std::ifstream ifs(datafile);
-	if(!ifs) log("ERROR: Cannot open grabfile for input: " << datafile);
+
+	if(!ifs)
+		log("ERROR: Cannot open grabfile for input: " << datafile);
+
 	str t, c, n, q;
+
 	std::vector<entry> full_match_list;
 	std::vector<entry> part_match_list;
 
@@ -204,9 +210,9 @@ void GrabberIrcBotPlugin::rq(const message& msg)
 	{
 		if(c != "*" && c != msg.get_chan())
 			continue;
-		if(nick.empty() || lower(n) == nick)
+		if(nick.empty() || lower_copy(n) == nick)
 			full_match_list.push_back(entry(t, c, n, q));
-		if(nick.empty() || lower(n).find(nick) != str::npos)
+		if(nick.empty() || lower_copy(n).find(nick) != str::npos)
 			part_match_list.push_back(entry(t, c, n, q));
 	}
 	mtx_grabfile.unlock();
@@ -272,14 +278,14 @@ str GrabberIrcBotPlugin::get_version() const { return VERSION; }
 
 void GrabberIrcBotPlugin::exit()
 {
-//	bug_func();
+//	bug_fun();
 }
 
 // INTERFACE: IrcBotMonitor
 
 void GrabberIrcBotPlugin::event(const message& msg)
 {
-	if(msg.command == "PRIVMSG")
+	if(msg.command == "PRIVMSG" && msg.get_trailing().find("\001ACTION "))
 	{
 		quote_que& chan_quotes = quotes[msg.get_chan()];
 
