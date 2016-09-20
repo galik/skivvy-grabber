@@ -25,3 +25,4 @@
 /.project
 /.settings/
 Makefile.in
+/configure.conf
