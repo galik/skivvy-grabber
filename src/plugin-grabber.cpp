@@ -40,6 +40,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <hol/simple_logger.h>
 #include <hol/string_utils.h>
 #include <hol/small_types.h>
+#include <hol/random_utils.h>
 
 #include <skivvy/utils.h>
 #include <skivvy/logrep.h>
@@ -50,6 +51,7 @@ IRC_BOT_PLUGIN(GrabberIrcBotPlugin);
 PLUGIN_INFO("grabber", "Comment Grabber", "0.6.0");
 
 using namespace skivvy::utils;
+using namespace hol::random_utils;
 using namespace hol::simple_logger;
 using namespace hol::small_types::basic;
 
@@ -62,6 +64,7 @@ struct entry
 	str chan;
 	str nick;
 	str text;
+	entry() {}
 	entry(const quote& q);
 	entry(const str& stamp, const str& chan, const str& nick, const str& text);
 };
@@ -144,6 +147,7 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 	lock_guard lock(mtx_quotes);
 	bool skipped = false;
 	for(q = chan_quotes.begin(); n && q != chan_quotes.end(); ++q)
+	{
 		if(sub.empty())
 		{
 			if(hol::lower_copy(q->msg.get_nickname()) == hol::lower_copy(nick))
@@ -157,7 +161,7 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 					break;
 			skipped = true;
 		}
-
+	}
 
 	if(q != chan_quotes.end())
 	{
@@ -176,11 +180,11 @@ void GrabberIrcBotPlugin::store(const entry& e)
 
 	const str datafile = bot.getf(DATA_FILE, DATA_FILE_DEFAULT);
 
-	std::ofstream ofs(datafile, std::ios::app);
-	if(!ofs)
-		LOG::E << "Cannot open grabfile for output: " << datafile;
 	lock_guard lock(mtx_grabfile);
-	ofs << e.stamp << ' ' << e.chan << ' ' << e.nick << ' ' << e.text << '\n';
+	if(auto ofs = std::ofstream(datafile, std::ios::app))
+		ofs << e.stamp << ' ' << e.chan << ' ' << e.nick << ' ' << e.text << '\n';
+	else
+		LOG::E << "Cannot open grabfile for output: " << datafile;
 }
 
 void GrabberIrcBotPlugin::rq(const message& msg)
@@ -190,28 +194,28 @@ void GrabberIrcBotPlugin::rq(const message& msg)
 
 	const str datafile = bot.getf(DATA_FILE, DATA_FILE_DEFAULT);
 
-	std::ifstream ifs(datafile);
-
-	if(!ifs)
-		LOG::E << "Cannot open grabfile for input: " << datafile;
-
-	str t, c, n, q;
-
 	std::vector<entry> full_match_list;
 	std::vector<entry> part_match_list;
 
 	{	std::lock_guard<std::mutex> lock(mtx_grabfile);
 
-		sgl(ifs, q); // skip version string
-		while(sgl(ifs >> t >> c >> n >> std::ws, q))
+		if(auto ifs = std::ifstream(datafile))
 		{
-			if(c != "*" && c != msg.get_chan())
-				continue;
-			if(nick.empty() || hol::lower_copy(n) == nick)
-				full_match_list.push_back(entry(t, c, n, q));
-			if(nick.empty() || hol::lower_copy(n).find(nick) != str::npos)
-				part_match_list.push_back(entry(t, c, n, q));
+			str t, c, n, q;
+
+			sgl(ifs, q); // skip version string
+			while(sgl(ifs >> t >> c >> n >> std::ws, q))
+			{
+				if(c != "*" && c != msg.get_chan())
+					continue;
+				if(nick.empty() || hol::lower_copy(n) == nick)
+					full_match_list.push_back(entry(t, c, n, q));
+				if(nick.empty() || hol::lower_copy(n).find(nick) != str::npos)
+					part_match_list.push_back(entry(t, c, n, q));
+			}
 		}
+		else
+			LOG::E << "Cannot open grabfile for input: " << datafile;
 	}
 
 	if(full_match_list.empty())
@@ -219,7 +223,7 @@ void GrabberIrcBotPlugin::rq(const message& msg)
 
 	if(!full_match_list.empty())
 	{
-		const entry& e = full_match_list[rand_int(0, full_match_list.size() - 1)];
+		const entry& e = rnd::random_element(full_match_list);
 		bot.fc_reply(msg, "<" + e.nick + "> " + e.text);
 	}
 }
