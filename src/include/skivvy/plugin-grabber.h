@@ -31,6 +31,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <skivvy/ircbot.h>
+#include <skivvy/botdb.h>
 
 #include <deque>
 #include <mutex>
@@ -85,7 +86,7 @@ public:
 	void event(const message& msg) override;
 
 private:
-
+	db::BotDb::SPtr db;
 	std::mutex mtx_grabfile; // database
 	std::mutex mtx_quotes; // message queue
 	quote_map quotes;
@@ -95,7 +96,6 @@ private:
 	void rq(const message& msg);
 
 	void store(const entry& e);
-
 };
 
 }} // skivvy::ircbot

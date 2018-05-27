@@ -86,7 +86,8 @@ entry::entry(const str& stamp, const str& chan, const str& nick, const str& text
 }
 
 GrabberIrcBotPlugin::GrabberIrcBotPlugin(IrcBot& bot)
-: BasicIrcBotPlugin(bot), max_quotes(100)
+: BasicIrcBotPlugin(bot)
+, max_quotes(100)
 {
 }
 
@@ -232,6 +233,12 @@ void GrabberIrcBotPlugin::rq(const message& msg)
 
 bool GrabberIrcBotPlugin::initialize()
 {
+	if(!(db = db::BotDb::instance(bot, get_id())))
+	{
+		LOG::E << "could not open BotDb for: " << get_id();
+		return false;
+	}
+
 	// TODO: UPGRADE FILE HERE
 	LOG::I << "GRABBER: Checking file version:";
 	std::ifstream ifs(bot.getf(DATA_FILE, DATA_FILE_DEFAULT));
