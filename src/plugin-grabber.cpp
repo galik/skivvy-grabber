@@ -36,10 +36,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sstream>
 #include <iostream>
 
-#include <sookee/bug.h>
-#include <sookee/log.h>
-#include <sookee/str.h>
-#include <sookee/types.h>
+#include <hol/bug.h>
+#include <hol/simple_logger.h>
+#include <hol/string_utils.h>
+#include <hol/small_types.h>
+#include <hol/random_utils.h>
 
 #include <skivvy/utils.h>
 #include <skivvy/logrep.h>
@@ -47,13 +48,12 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 IRC_BOT_PLUGIN(GrabberIrcBotPlugin);
-PLUGIN_INFO("grabber", "Comment Grabber", "0.2");
+PLUGIN_INFO("grabber", "Comment Grabber", "0.6.0");
 
 using namespace skivvy::utils;
-using namespace sookee::bug;
-using namespace sookee::log;
-using namespace sookee::types;
-using namespace sookee::utils;
+using namespace hol::random_utils;
+using namespace hol::simple_logger;
+using namespace hol::small_types::basic;
 
 const str DATA_FILE = "grabber.data_file";
 const str DATA_FILE_DEFAULT = "grabber-data.txt";
@@ -64,6 +64,7 @@ struct entry
 	str chan;
 	str nick;
 	str text;
+	entry() {}
 	entry(const quote& q);
 	entry(const str& stamp, const str& chan, const str& nick, const str& text);
 };
@@ -85,11 +86,10 @@ entry::entry(const str& stamp, const str& chan, const str& nick, const str& text
 }
 
 GrabberIrcBotPlugin::GrabberIrcBotPlugin(IrcBot& bot)
-: BasicIrcBotPlugin(bot), max_quotes(100)
+: BasicIrcBotPlugin(bot)
+, max_quotes(100)
 {
 }
-
-GrabberIrcBotPlugin::~GrabberIrcBotPlugin() {}
 
 void GrabberIrcBotPlugin::grab(const message& msg)
 {
@@ -124,7 +124,7 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 		n = 1;
 		iss.clear();
 		std::getline(iss, sub);
-		trim(sub);
+		hol::trim_mute(sub);
 	}
 
 	bug("   n: " << n);
@@ -148,20 +148,21 @@ void GrabberIrcBotPlugin::grab(const message& msg)
 	lock_guard lock(mtx_quotes);
 	bool skipped = false;
 	for(q = chan_quotes.begin(); n && q != chan_quotes.end(); ++q)
+	{
 		if(sub.empty())
 		{
-			if(lower_copy(q->msg.get_nickname()) == lower_copy(nick))
+			if(hol::lower_copy(q->msg.get_nickname()) == hol::lower_copy(nick))
 				if(!(--n))
 					break;
 		}
 		else
 		{
-			if(lower_copy(q->msg.get_nickname()) == lower_copy(nick))
+			if(hol::lower_copy(q->msg.get_nickname()) == hol::lower_copy(nick))
 				if(q->msg.get_trailing().find(sub) != str::npos && skipped)
 					break;
 			skipped = true;
 		}
-
+	}
 
 	if(q != chan_quotes.end())
 	{
@@ -180,49 +181,50 @@ void GrabberIrcBotPlugin::store(const entry& e)
 
 	const str datafile = bot.getf(DATA_FILE, DATA_FILE_DEFAULT);
 
-	std::ofstream ofs(datafile, std::ios::app);
-	if(!ofs)
-		log("ERROR: Cannot open grabfile for output: " << datafile);
 	lock_guard lock(mtx_grabfile);
-	ofs << e.stamp << ' ' << e.chan << ' ' << e.nick << ' ' << e.text << '\n';
+	if(auto ofs = std::ofstream(datafile, std::ios::app))
+		ofs << e.stamp << ' ' << e.chan << ' ' << e.nick << ' ' << e.text << '\n';
+	else
+		LOG::E << "Cannot open grabfile for output: " << datafile;
 }
 
 void GrabberIrcBotPlugin::rq(const message& msg)
 {
-	str nick = lower_copy(msg.get_user_params());
-	trim(nick);
+	str nick = hol::lower_copy(msg.get_user_params());
+	hol::trim_mute(nick);
 
 	const str datafile = bot.getf(DATA_FILE, DATA_FILE_DEFAULT);
-
-	std::ifstream ifs(datafile);
-
-	if(!ifs)
-		log("ERROR: Cannot open grabfile for input: " << datafile);
-
-	str t, c, n, q;
 
 	std::vector<entry> full_match_list;
 	std::vector<entry> part_match_list;
 
-	mtx_grabfile.lock();
-	sgl(ifs, q); // skip version string
-	while(sgl(ifs >> t >> c >> n >> std::ws, q))
-	{
-		if(c != "*" && c != msg.get_chan())
-			continue;
-		if(nick.empty() || lower_copy(n) == nick)
-			full_match_list.push_back(entry(t, c, n, q));
-		if(nick.empty() || lower_copy(n).find(nick) != str::npos)
-			part_match_list.push_back(entry(t, c, n, q));
+	{	std::lock_guard<std::mutex> lock(mtx_grabfile);
+
+		if(auto ifs = std::ifstream(datafile))
+		{
+			str t, c, n, q;
+
+			sgl(ifs, q); // skip version string
+			while(sgl(ifs >> t >> c >> n >> std::ws, q))
+			{
+				if(c != "*" && c != msg.get_chan())
+					continue;
+				if(nick.empty() || hol::lower_copy(n) == nick)
+					full_match_list.push_back(entry(t, c, n, q));
+				if(nick.empty() || hol::lower_copy(n).find(nick) != str::npos)
+					part_match_list.push_back(entry(t, c, n, q));
+			}
+		}
+		else
+			LOG::E << "Cannot open grabfile for input: " << datafile;
 	}
-	mtx_grabfile.unlock();
 
 	if(full_match_list.empty())
 		full_match_list.assign(part_match_list.begin(), part_match_list.end());
 
 	if(!full_match_list.empty())
 	{
-		const entry& e = full_match_list[rand_int(0, full_match_list.size() - 1)];
+		const entry& e = rnd::random_element(full_match_list);
 		bot.fc_reply(msg, "<" + e.nick + "> " + e.text);
 	}
 }
@@ -231,15 +233,21 @@ void GrabberIrcBotPlugin::rq(const message& msg)
 
 bool GrabberIrcBotPlugin::initialize()
 {
+	if(!(db = db::BotDb::instance(bot, get_id())))
+	{
+		LOG::E << "could not open BotDb for: " << get_id();
+		return false;
+	}
+
 	// TODO: UPGRADE FILE HERE
-	log("GRABBER: Checking file version:");
+	LOG::I << "GRABBER: Checking file version:";
 	std::ifstream ifs(bot.getf(DATA_FILE, DATA_FILE_DEFAULT));
 
 	str line;
 	sgl(ifs, line);
 	if(line.find("GRABBER_FILE_VERSION:"))
 	{
-		log("GRABBER: File is unversionned, upgrading to v0.1");
+		LOG::I << "GRABBER: File is unversionned, upgrading to v0.1";
 		// unversionned
 		str_vec lines;
 		str t, c, n, q;

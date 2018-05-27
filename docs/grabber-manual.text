@@ -1,15 +1,35 @@
-manual.text
+/*-----------------------------------------------------------------.
+| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
+'------------------------------------------------------------------'
 
- Created on: 2 Feb 2012
-     Author: SooKee oasookee@googlemail.com
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
 
-     
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+02110-1301, USA.
+
+http://www.gnu.org/licenses/gpl-2.0.html
+
+'-----------------------------------------------------------------*/
+
 ------------------------------------------------------------
 | COMPILING:
 ------------------------------------------------------------
 
-GRABBER requires C++11 functionality. He is currently built
-using GCC 4.7 trunk but GCC 4.6 may work.
+Requirements:
+
+* C++14
+* libskivvy Irc Bot lib and headers: https://github.com/sookee/skivvy
+* HOL       header only library:     https://github.com/galik/header-only
 
 ------------------------------------------------------------
 | INSTALLING:
